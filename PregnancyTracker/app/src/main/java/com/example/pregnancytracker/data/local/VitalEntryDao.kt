@@ -14,6 +14,4 @@ interface VitalEntryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entry: VitalEntry)
 
-    @Query("SELECT COUNT(*) FROM vitals")
-    suspend fun getCount(): Int
 }

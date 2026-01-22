@@ -66,7 +66,6 @@ object NotificationHelper {
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
-
         NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
     }
 }
