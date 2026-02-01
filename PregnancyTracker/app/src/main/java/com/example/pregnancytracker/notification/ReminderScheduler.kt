@@ -1,33 +1,43 @@
 package com.example.pregnancytracker.notification
 
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import com.example.pregnancytracker.receiver.VitalsAlarmReceiver
+import androidx.work.*
+import java.util.concurrent.TimeUnit
+
+class VitalsReminderWorker(
+    context: Context,
+    params: WorkerParameters
+) : Worker(context, params) {
+
+    override fun doWork(): Result {
+        NotificationHelper.showVitalsReminder(applicationContext)
+        return Result.success()
+    }
+}
 
 object ReminderScheduler {
 
+    private const val WORK_NAME = "vitals_reminder_work"
+
     fun scheduleReminder(context: Context) {
-        val alarmManager =
-            context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val workManager = WorkManager.getInstance(context)
 
-        val intent = Intent(context, VitalsAlarmReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        workManager.cancelUniqueWork(WORK_NAME)
+
+        val periodicWork = PeriodicWorkRequestBuilder<VitalsReminderWorker>(
+            5, TimeUnit.HOURS
         )
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
+                    .build()
+            )
+            .build()
 
-        val interval = 5* 60 * 60 * 1000L
-        val triggerAt = System.currentTimeMillis() + interval
-
-        alarmManager.setRepeating(
-            AlarmManager.RTC_WAKEUP,
-            triggerAt,
-            interval,
-            pendingIntent
+        workManager.enqueueUniquePeriodicWork(
+            WORK_NAME,
+            ExistingPeriodicWorkPolicy.REPLACE,
+            periodicWork
         )
     }
 }
